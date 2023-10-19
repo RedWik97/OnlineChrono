@@ -120,7 +120,8 @@
                                     // Calculate bullet speed
                                     
 
-                                    resultElement.textContent = `Gunshot detected at ${gunshotTime}.\nImpact detected at ${impactTime}. \nEstimated Bullet Speed: ${bulletSpeedfps.toFixed(2)} fps`;
+                                    resultElement.innerHTML = `Gunshot detected at ${gunshotTime}.<br>Impact detected at ${impactTime}.<br>Estimated Bullet Speed: ${bulletSpeedfps.toFixed(2)} fps`;
+
 
                                 }
                             }
