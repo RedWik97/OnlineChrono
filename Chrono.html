@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bullet Speed Chronograph</title>
+</head>
+<body>
+    <h1>Bullet Speed Chronograph</h1>
+    <label for="distanceInput">Distance to Solid Plate (in meters):</label>
+    <input type="number" id="distanceInput">
+    <button id="listenButton">Listen</button>
+    <p id="result"></p>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const distanceInput = document.getElementById('distanceInput');
+            const listenButton = document.getElementById('listenButton');
+            const resultElement = document.getElementById('result');
+
+            listenButton.addEventListener('click', () => {
+                const distanceToSolidPlate = parseFloat(distanceInput.value);
+
+                if (isNaN(distanceToSolidPlate)) {
+                    alert('Please enter a valid distance.');
+                    return;
+                }
+                let recordingStartTime = null;
+                let gunshotDetected = false;
+                let impactDetected = false;
+                let gunshotTime = null;
+                let impactTime = null;
+                
+
+                // Request access to the microphone
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then((stream) => {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const audioSource = audioContext.createMediaStreamSource(stream);
+
+                        const analyser = audioContext.createAnalyser();
+                        analyser.fftSize = 256;
+                        const bufferLength = analyser.frequencyBinCount;
+                        const dataArray = new Uint8Array(bufferLength);
+
+                        audioSource.connect(analyser);
+
+                        
+
+                        // Display "Listening" message after microphone access is confirmed
+                        resultElement.textContent = 'Listening...';
+
+                        const processAudio = () => {
+                            analyser.getByteFrequencyData(dataArray);
+
+                            // You need to define a threshold and frequency range to detect the gunshot sound.
+                            const gunshotThreshold = 10;
+                            const gunshotFrequencyRange = [1000, 4000]; // Adjust this range based on your audio source.
+
+                            // You also need to define a threshold and frequency range to detect the impact sound.
+                            const impactThreshold = 10; // Adjust this threshold as needed.
+                            const impactFrequencyRange = [900, 2000]; // Adjust this range based on your audio source.
+
+                            // Find the frequency with the highest amplitude
+                            let maxAmplitude = 0;
+                            let maxAmplitudeIndex = 0;
+                            for (let i = 0; i < dataArray.length; i++) {
+                                if (dataArray[i] > maxAmplitude) {
+                                    maxAmplitude = dataArray[i];
+                                    maxAmplitudeIndex = i;
+                                }
+                            }
+
+                            // Calculate the current frequency based on the index
+                            const sampleRate = audioContext.sampleRate;
+                            const currentFrequency = (maxAmplitudeIndex / bufferLength) * (sampleRate / 2);
+
+                            // Check if the current frequency and amplitude meet the gunshot and impact criteria
+                            const isGunshot = (
+                                currentFrequency >= gunshotFrequencyRange[0] &&
+                                currentFrequency <= gunshotFrequencyRange[1] &&
+                                maxAmplitude > gunshotThreshold
+                            );
+
+                            const isImpact = (
+                                currentFrequency >= impactFrequencyRange[0] &&
+                                currentFrequency <= impactFrequencyRange[1] &&
+                                maxAmplitude > impactThreshold
+                            );
+
+                            if (isGunshot) {
+                                if (!gunshotDetected) {
+                                    // Log the time of the gunshot for calculating the time delay
+                                    gunshotDetected = true;
+                                    recordingStartTime=null;
+                                    recordingStartTime = audioContext.currentTime;
+                                    gunshotTime = new Date().toLocaleTimeString();
+                                    resultElement.textContent = `Gunshot detected at ${recordingStartTime}. Waiting for impact...`;
+                                }
+                            }
+
+                            if (gunshotDetected && isImpact) {
+                                // Calculate the time delay between gunshot and impact
+                                const currentTime = audioContext.currentTime;
+                                impactTime = currentTime
+                                const timeDelay = currentTime - recordingStartTime;
+                                
+
+                                if (timeDelay > 0.3) {
+                                    // Calculate bullet speed only if the time delay is greater than 0.3 seconds
+                                    const speedOfSound = 343; // in meters per second (at 20°C)
+                                    const soundTravelTime = distanceToSolidPlate / speedOfSound;
+                                    const flightTime = timeDelay-soundTravelTime;
+                                    
+                                    
+                                    const bulletSpeed = distanceToSolidPlate / flightTime;
+                                    const bulletSpeedfps = bulletSpeed*3.28084;
+
+                                    // Calculate bullet speed
+                                    
+
+                                    resultElement.textContent = `Gunshot detected at ${recordingStartTime}.\n Impact detected at ${impactTime}. Estimated Bullet Speed: ${bulletSpeed.toFixed(2)} m/s`;
+                                }
+                            }
+
+                            requestAnimationFrame(processAudio);
+                        };
+
+                        processAudio();
+                    })
+                    .catch((error) => {
+                        console.error('Error accessing the microphone:', error);
+                        resultElement.textContent = 'Error accessing the microphone. Please grant permission.';
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
