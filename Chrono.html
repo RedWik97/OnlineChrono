@@ -55,11 +55,11 @@
                             analyser.getByteFrequencyData(dataArray);
 
                             // You need to define a threshold and frequency range to detect the gunshot sound.
-                            const gunshotThreshold = 10;
+                            const gunshotThreshold = 100;
                             const gunshotFrequencyRange = [1000, 4000]; // Adjust this range based on your audio source.
 
                             // You also need to define a threshold and frequency range to detect the impact sound.
-                            const impactThreshold = 10; // Adjust this threshold as needed.
+                            const impactThreshold = 100; // Adjust this threshold as needed.
                             const impactFrequencyRange = [900, 2000]; // Adjust this range based on your audio source.
 
                             // Find the frequency with the highest amplitude
